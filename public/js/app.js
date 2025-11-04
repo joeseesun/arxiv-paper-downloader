@@ -25,19 +25,70 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('初始化完成');
 });
 
+// URL提取函数
+function extractUrlsFromText(text) {
+    // 支持多种URL格式的正则表达式
+    const urlRegex = /(?:https?:\/\/|www\.)[^\s\|\`\(\)\[\]<>]+/gi;
+    
+    // 提取所有匹配的URL
+    const matches = text.match(urlRegex) || [];
+    
+    // 清理和验证URL
+    const validUrls = matches.map(url => {
+        // 移除末尾的标点符号
+        url = url.replace(/[.,;:!?)\]}>]+$/, '');
+        
+        // 如果URL以www开头但没有协议，添加https://
+        if (url.startsWith('www.')) {
+            url = 'https://' + url;
+        }
+        
+        return url;
+    }).filter(url => {
+        // 验证URL格式
+        try {
+            new URL(url);
+            return true;
+        } catch {
+            return false;
+        }
+    });
+    
+    // 去重
+    return [...new Set(validUrls)];
+}
+
 // 表单提交处理函数
 async function handleFormSubmit(e) {
     console.log('表单提交事件触发');
     e.preventDefault();
     
-    const urls = document.getElementById('urls').value.trim();
-    console.log('输入的URLs:', urls);
-    if (!urls) {
-        console.log('URLs为空，返回');
+    const inputText = document.getElementById('urls').value.trim();
+    console.log('输入的文本:', inputText);
+    if (!inputText) {
+        console.log('输入为空，返回');
         return;
     }
     
-    const urlList = urls.split('\n').filter(url => url.trim());
+    // 自动提取URL
+    const extractedUrls = extractUrlsFromText(inputText);
+    console.log('提取到的URLs:', extractedUrls);
+    
+    if (extractedUrls.length === 0) {
+        alert('未在输入文本中找到有效的URL链接');
+        return;
+    }
+    
+    // 如果提取到的URL数量与输入行数不同，显示提取结果
+    const inputLines = inputText.split('\n').filter(line => line.trim()).length;
+    if (extractedUrls.length !== inputLines) {
+        const confirmMsg = `从输入文本中提取到 ${extractedUrls.length} 个URL：\n\n${extractedUrls.slice(0, 5).join('\n')}${extractedUrls.length > 5 ? '\n...' : ''}\n\n是否继续处理这些URL？`;
+        if (!confirm(confirmMsg)) {
+            return;
+        }
+    }
+    
+    const urlList = extractedUrls;
     const submitBtn = document.getElementById('submitBtn');
     const loading = document.getElementById('loading');
     const result = document.getElementById('result');
