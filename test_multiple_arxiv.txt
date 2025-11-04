@@ -1,0 +1,10 @@
+## 测试多个arXiv论文链接
+
+这里有几篇重要的论文：
+
+1. Transformer论文：https://arxiv.org/abs/1706.03762
+2. Seq2Seq论文：https://arxiv.org/abs/1409.3215  
+3. 知识蒸馏论文：https://arxiv.org/abs/1503.02531
+4. ResNet论文：https://arxiv.org/abs/1512.03385
+
+这些论文都很重要，应该显示预览界面。

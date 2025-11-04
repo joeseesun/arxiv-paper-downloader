@@ -238,10 +238,29 @@ function showArxivListResult(data, loading, result) {
     result.style.display = 'block';
     result.className = 'result success';
     
-    const arxivResult = data.results.find(r => r.type === 'arxiv_list');
+    // 支持两种数据结构：
+    // 1. 从arXiv列表页面提取的 (data.results中有arxiv_list类型)
+    // 2. 从多个arXiv链接提取的 (直接在data中有papersWithInfo)
+    let arxivResult = data.results ? data.results.find(r => r.type === 'arxiv_list') : null;
+    let papersWithInfo = [];
+    let papers = [];
+    let extractedCount = 0;
     
     if (arxivResult && arxivResult.success) {
-        let html = '<h3>📋 arXiv论文列表 (共 ' + arxivResult.extractedCount + ' 篇)</h3>';
+        // 来自arXiv列表页面
+        papersWithInfo = arxivResult.papersWithInfo || [];
+        papers = arxivResult.papers || [];
+        extractedCount = arxivResult.extractedCount || papers.length;
+    } else if (data.papersWithInfo) {
+        // 来自多个arXiv链接提取
+        papersWithInfo = data.papersWithInfo || [];
+        papers = papersWithInfo.map(p => p.url);
+        extractedCount = data.extractedCount || papersWithInfo.length;
+    }
+    
+    if (papersWithInfo.length > 0 || papers.length > 0) {
+        let html = '<h3>📋 arXiv论文列表 (共 ' + extractedCount + ' 篇)</h3>';
+        html += '<p style="color: #666; margin-bottom: 20px;">' + (data.message || '已提取论文链接') + '</p>';
         
         // 操作按钮
         html += '<div style="margin: 20px 0; display: flex; gap: 12px;">';
@@ -252,9 +271,6 @@ function showArxivListResult(data, loading, result) {
         // 论文列表
         html += '<div class="paper-list">';
         html += '<h4>论文列表：</h4>';
-        
-        const papersWithInfo = arxivResult.papersWithInfo || [];
-        const papers = arxivResult.papers || [];
         
         papers.forEach((paperUrl, index) => {
             // 获取论文信息
@@ -289,8 +305,8 @@ function showArxivListResult(data, loading, result) {
         result.innerHTML = html;
         
         // 存储提取的论文链接
-        window.extractedPapers = arxivResult.papers;
-        window.extractedPapersInfo = arxivResult.papersWithInfo || [];
+        window.extractedPapers = papers;
+        window.extractedPapersInfo = papersWithInfo;
     } else {
         result.className = 'result error';
         result.innerHTML = '<h3>❌ 提取失败</h3><p>无法从页面中提取论文链接</p>';
