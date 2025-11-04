@@ -153,6 +153,28 @@ app.post('/process', async (req, res) => {
       });
     }
     
+    // 检查是否有多个arXiv论文链接（应该显示预览）
+    const arxivPaperResults = results.filter(r => r.success && r.arxivId);
+    
+    if (arxivPaperResults.length >= 3) {
+      // 如果有3个或更多arXiv论文，显示预览让用户选择
+      const papersWithInfo = arxivPaperResults.map(paper => ({
+        url: paper.url,
+        pdfUrl: paper.pdfUrl || `https://arxiv.org/pdf/${paper.arxivId}.pdf`,
+        id: paper.arxivId,
+        title: paper.title || `论文 ${paper.arxivId}`
+      }));
+      
+      return res.json({
+        success: true,
+        type: 'arxiv_list_extracted',
+        extractedCount: papersWithInfo.length,
+        papersWithInfo: papersWithInfo,
+        results: results,
+        message: `从输入中提取到 ${papersWithInfo.length} 篇arXiv论文`
+      });
+    }
+    
     // 统计结果
     const successResults = results.filter(r => r.success);
     const successCount = successResults.length;
