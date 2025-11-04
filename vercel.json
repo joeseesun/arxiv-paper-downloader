@@ -8,29 +8,20 @@
   ],
   "routes": [
     {
-      "src": "/downloads/(.*)",
-      "dest": "/api/download/$1"
-    },
-    {
       "src": "/download-pdf",
-      "dest": "/api/download-pdf"
+      "dest": "/server.js"
     },
     {
       "src": "/process",
-      "dest": "/api/process"
+      "dest": "/server.js"
     },
     {
       "src": "/batch-download",
-      "dest": "/api/batch-download"
+      "dest": "/server.js"
     },
     {
       "src": "/(.*)",
       "dest": "/server.js"
     }
-  ],
-  "functions": {
-    "server.js": {
-      "maxDuration": 30
-    }
-  }
+  ]
 }
