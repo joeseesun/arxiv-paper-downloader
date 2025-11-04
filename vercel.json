@@ -1,27 +1,15 @@
 {
   "version": 2,
-  "builds": [
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
     {
-      "src": "server.js",
-      "use": "@vercel/node"
+      "source": "/((?!api/).*)",
+      "destination": "/public/$1"
     }
   ],
-  "routes": [
-    {
-      "src": "/download-pdf",
-      "dest": "/server.js"
-    },
-    {
-      "src": "/process",
-      "dest": "/server.js"
-    },
-    {
-      "src": "/batch-download",
-      "dest": "/server.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/server.js"
-    }
-  ]
+  "public": true
 }

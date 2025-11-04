@@ -202,7 +202,7 @@ async function processServerSide(urlList) {
         
         console.log(`处理 ${urlList.length} 个URL，超时设置: ${timeoutMs/1000}秒`);
         
-        const response = await fetch('/process', {
+        const response = await fetch('/api/process', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ urls: urlList }),
@@ -344,6 +344,175 @@ function copyExtractedLinks() {
     }
 }
 
+// 下载内容文件（Markdown/文本）
+function downloadContent(encodedContent, filename, type) {
+    try {
+        // 创建下载链接，内容已经是URL编码的
+        const downloadUrl = `/api/download-content?content=${encodedContent}&filename=${encodeURIComponent(filename)}&type=${type}`;
+        
+        // 创建隐藏的链接来触发下载
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        link.style.display = 'none';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        console.log('开始下载:', filename);
+    } catch (error) {
+        console.error('下载失败:', error);
+        alert('下载失败: ' + error.message);
+    }
+}
+
+// 预览Markdown内容
+function previewContent(encodedContent, title) {
+    try {
+        // 解码内容（现在是URL编码的）
+        const content = decodeURIComponent(encodedContent);
+        
+        // 创建预览窗口
+        const previewWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+        
+        // 生成预览HTML
+        const previewHtml = `
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title} - 预览</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+            color: #333;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 24px;
+            margin-bottom: 12px;
+        }
+        h1 { font-size: 2em; border-bottom: 2px solid #eee; padding-bottom: 8px; }
+        h2 { font-size: 1.5em; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+        p { margin-bottom: 16px; }
+        blockquote {
+            border-left: 4px solid #ddd;
+            margin: 16px 0;
+            padding: 8px 16px;
+            background: #f9f9f9;
+            font-style: italic;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Consolas', monospace;
+        }
+        pre {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 12px;
+            overflow-x: auto;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+        }
+        ul, ol { padding-left: 24px; }
+        li { margin-bottom: 4px; }
+        a { color: #3498db; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 16px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+        .toolbar {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .toolbar button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        .toolbar button:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        Markdown预览
+        <button onclick="window.print()">打印</button>
+        <button onclick="window.close()">关闭</button>
+    </div>
+    <div id="content"></div>
+    <script>
+        // 简单的Markdown渲染
+        function renderMarkdown(text) {
+            return text
+                // 标题
+                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                // 粗体和斜体
+                .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')
+                .replace(/\\*(.*?)\\*/g, '<em>$1</em>')
+                // 链接
+                .replace(/\\[([^\\]]+)\\]\\(([^\\)]+)\\)/g, '<a href="$2" target="_blank">$1</a>')
+                // 代码
+                .replace(/\`([^\`]+)\`/g, '<code>$1</code>')
+                // 引用
+                .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
+                // 列表
+                .replace(/^\\- (.*$)/gim, '<li>$1</li>')
+                // 换行
+                .replace(/\\n/g, '<br>');
+        }
+        
+        const content = \`${content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;
+        document.getElementById('content').innerHTML = renderMarkdown(content);
+    </script>
+</body>
+</html>`;
+        
+        previewWindow.document.write(previewHtml);
+        previewWindow.document.close();
+        
+    } catch (error) {
+        console.error('预览失败:', error);
+        alert('预览失败: ' + error.message);
+    }
+}
+
 // 直接下载PDF（让用户选择保存位置）
 async function downloadDirectPdf(pdfUrl, index) {
     const statusEl = document.getElementById('status-' + index);
@@ -355,7 +524,7 @@ async function downloadDirectPdf(pdfUrl, index) {
         btnEl.disabled = true;
         
         // 使用服务器代理下载PDF
-        const proxyUrl = `/download-pdf?url=${encodeURIComponent(pdfUrl)}`;
+        const proxyUrl = `/api/download-pdf?url=${encodeURIComponent(pdfUrl)}`;
         
         // 创建一个隐藏的链接来触发下载
         const link = document.createElement('a');
@@ -388,7 +557,7 @@ async function downloadSinglePaper(url, index) {
         statusEl.style.color = '#1a1a1a';
         btnEl.disabled = true;
         
-        const response = await fetch('/process', {
+        const response = await fetch('/api/process', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ urls: [url] })
@@ -427,7 +596,7 @@ async function batchDownloadDirectPdfs() {
             const paper = window.extractedPapersInfo[i];
             
             // 使用服务器代理下载PDF
-            const proxyUrl = `/download-pdf?url=${encodeURIComponent(paper.pdfUrl)}`;
+            const proxyUrl = `/api/download-pdf?url=${encodeURIComponent(paper.pdfUrl)}`;
             
             // 创建下载链接
             const link = document.createElement('a');
@@ -486,7 +655,7 @@ async function batchDownloadPapers() {
     
     try {
         // 使用SSE进行批量下载
-        const response = await fetch('/batch-download', {
+        const response = await fetch('/api/batch-download', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ urls: window.extractedPapers })
@@ -628,7 +797,9 @@ function showFinalResult(data, loading, result) {
         
         // 分类显示结果
         const downloadedFiles = results.filter(r => r.success && (r.type === 'direct_pdf' || r.type === 'webpage_pdf' || r.arxivId));
+        const contentFiles = results.filter(r => r.success && (r.type === 'markdown' || r.type === 'text'));
         const webpageAnalysis = results.filter(r => r.success && r.type === 'webpage_analysis');
+        const guideResults = results.filter(r => r.success && r.type === 'guide');
         const failedResults = results.filter(r => !r.success);
         
         // 显示已下载的文件
@@ -642,6 +813,95 @@ function showFinalResult(data, loading, result) {
                 '</li>';
             });
             html += '</ul>';
+        }
+        
+        // 显示内容文件（Markdown/文本）
+        if (contentFiles.length > 0) {
+            html += '<h4>📝 提取的内容</h4>';
+            html += '<div class="content-files">';
+            contentFiles.forEach(file => {
+                const icon = file.type === 'markdown' ? '📝' : '📄';
+                const typeText = file.type === 'markdown' ? 'Markdown' : '纯文本';
+                const sizeText = file.size ? `(${Math.round(file.size / 1024)}KB)` : '';
+                
+                html += '<div class="content-file-item" style="margin-bottom: 16px; padding: 16px; background: #f0f9ff; border-radius: 6px; border-left: 4px solid #0ea5e9;">';
+                html += '<div style="display: flex; justify-content: space-between; align-items: flex-start;">';
+                html += '<div>';
+                html += '<h5 style="margin: 0 0 8px 0; color: #1a1a1a;">' + icon + ' ' + (file.metadata?.title || file.filename) + '</h5>';
+                if (file.metadata?.description) {
+                    html += '<p style="margin: 0 0 8px 0; color: #666; font-size: 14px;">' + file.metadata.description + '</p>';
+                }
+                html += '<div style="font-size: 12px; color: #888;">';
+                html += '<span>格式: ' + typeText + '</span>';
+                if (sizeText) html += ' <span>' + sizeText + '</span>';
+                if (file.metadata?.author) html += ' <span>作者: ' + file.metadata.author + '</span>';
+                html += '</div>';
+                html += '</div>';
+                html += '<div style="display: flex; gap: 8px; flex-shrink: 0;">';
+                // 使用更安全的编码方式
+                const encodedContent = encodeURIComponent(file.content);
+                html += '<button class="btn-small" onclick="downloadContent(\'' + 
+                    encodedContent + '\', \'' + 
+                    file.filename + '\', \'' + file.type + '\')">下载 ' + typeText + '</button>';
+                if (file.type === 'markdown') {
+                    html += '<button class="btn-small btn-secondary" onclick="previewContent(\'' + 
+                        encodedContent + '\', \'' + 
+                        (file.metadata?.title || file.filename) + '\')">预览</button>';
+                }
+                html += '</div>';
+                html += '</div>';
+                
+                // 显示提取的替代方案
+                if (file.alternatives && file.alternatives.length > 0) {
+                    html += '<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e0f2fe;">';
+                    html += '<strong style="color: #0369a1; font-size: 13px;">💡 其他选项：</strong>';
+                    html += '<ul style="margin: 6px 0 0 0; padding-left: 16px; font-size: 13px;">';
+                    file.alternatives.forEach(alt => {
+                        html += '<li style="margin: 2px 0; color: #0369a1;">' + alt + '</li>';
+                    });
+                    html += '</ul>';
+                    html += '</div>';
+                }
+                
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+        
+        // 显示指导结果
+        if (guideResults.length > 0) {
+            html += '<h4>💡 转换指导</h4>';
+            guideResults.forEach(guide => {
+                html += '<div style="margin-bottom: 16px; padding: 16px; background: #fef3c7; border-radius: 6px; border-left: 4px solid #f59e0b;">';
+                html += '<strong>' + (guide.title || '网页内容') + '</strong><br>';
+                html += '<div style="color: #666; margin: 8px 0;">' + guide.message + '</div>';
+                
+                // 显示PDF链接
+                if (guide.pdfLinks && guide.pdfLinks.length > 0) {
+                    html += '<div style="margin-top: 12px;">';
+                    html += '<strong style="color: #1a1a1a;">🔗 发现的PDF链接：</strong>';
+                    html += '<ul style="margin: 8px 0; padding-left: 20px;">';
+                    guide.pdfLinks.forEach(link => {
+                        html += '<li style="margin: 4px 0;"><a href="' + link.url + '" target="_blank" style="color: #0ea5e9;">' + link.text + '</a></li>';
+                    });
+                    html += '</ul>';
+                    html += '</div>';
+                }
+                
+                // 显示替代方案
+                if (guide.alternatives && guide.alternatives.length > 0) {
+                    html += '<div style="margin-top: 12px;">';
+                    html += '<strong style="color: #1a1a1a;">建议的解决方案：</strong>';
+                    html += '<ul style="margin: 8px 0; padding-left: 20px;">';
+                    guide.alternatives.forEach(alt => {
+                        if (alt) html += '<li style="margin: 4px 0; color: #374151;">' + alt + '</li>';
+                    });
+                    html += '</ul>';
+                    html += '</div>';
+                }
+                
+                html += '</div>';
+            });
         }
         
         // 显示网页分析结果

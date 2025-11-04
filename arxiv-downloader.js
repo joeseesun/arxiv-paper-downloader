@@ -8,12 +8,17 @@ const __dirname = path.dirname(__filename);
 
 class ArxivDownloader {
   constructor() {
-    this.downloadDir = path.join(__dirname, 'downloads');
-    this.ensureDownloadDir();
+    // 检测是否在serverless环境中
+    this.isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NETLIFY;
+    
+    if (!this.isServerless) {
+      this.downloadDir = path.join(__dirname, 'downloads');
+      this.ensureDownloadDir();
+    }
   }
 
   ensureDownloadDir() {
-    if (!fs.existsSync(this.downloadDir)) {
+    if (!this.isServerless && !fs.existsSync(this.downloadDir)) {
       fs.mkdirSync(this.downloadDir, { recursive: true });
     }
   }
@@ -78,41 +83,59 @@ class ArxivDownloader {
       
       // 生成文件名
       const filename = `${title}_${arxivId}.pdf`;
-      const filepath = path.join(this.downloadDir, filename);
       
-      console.log('开始下载PDF...');
+      console.log('开始处理PDF...');
       
-      // 下载PDF文件
-      const response = await axios({
-        method: 'GET',
-        url: pdfUrl,
-        responseType: 'stream',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-        }
-      });
-      
-      // 保存文件
-      const writer = fs.createWriteStream(filepath);
-      response.data.pipe(writer);
-      
-      return new Promise((resolve, reject) => {
-        writer.on('finish', () => {
-          console.log('下载完成:', filepath);
-          resolve({
-            success: true,
-            filepath: filepath,
-            filename: filename,
-            arxivId: arxivId,
-            title: title
-          });
+      if (this.isServerless) {
+        // 在serverless环境中，不保存文件，直接返回PDF信息
+        console.log('Serverless环境：返回PDF信息而不下载文件');
+        return {
+          success: true,
+          pdfUrl: pdfUrl,
+          filename: filename,
+          arxivId: arxivId,
+          title: title,
+          url: url,
+          type: 'arxiv_paper'
+        };
+      } else {
+        // 本地环境：下载并保存文件
+        const filepath = path.join(this.downloadDir, filename);
+        
+        // 下载PDF文件
+        const response = await axios({
+          method: 'GET',
+          url: pdfUrl,
+          responseType: 'stream',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+          }
         });
         
-        writer.on('error', (error) => {
-          console.error('文件写入错误:', error);
-          reject(error);
+        // 保存文件
+        const writer = fs.createWriteStream(filepath);
+        response.data.pipe(writer);
+        
+        return new Promise((resolve, reject) => {
+          writer.on('finish', () => {
+            console.log('下载完成:', filepath);
+            resolve({
+              success: true,
+              filepath: filepath,
+              filename: filename,
+              arxivId: arxivId,
+              title: title,
+              url: url,
+              type: 'arxiv_paper'
+            });
+          });
+          
+          writer.on('error', (error) => {
+            console.error('文件写入错误:', error);
+            reject(error);
+          });
         });
-      });
+      }
       
     } catch (error) {
       console.error('下载失败:', error.message);

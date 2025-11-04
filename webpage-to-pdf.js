@@ -5,20 +5,28 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { isVercel, checkPlaywrightAvailable } from './environment.js';
 import VercelPdfConverter from './pdf-converter-vercel.js';
+import WebpageContentExtractor from './webpage-content-extractor.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 class WebpageProcessor {
   constructor() {
-    this.downloadDir = path.join(__dirname, 'downloads');
-    this.ensureDownloadDir();
+    // 检测是否在serverless环境中
+    this.isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NETLIFY;
+    
+    if (!this.isServerless) {
+      this.downloadDir = path.join(__dirname, 'downloads');
+      this.ensureDownloadDir();
+    }
+    
     this.vercelConverter = new VercelPdfConverter();
+    this.contentExtractor = new WebpageContentExtractor();
     this.playwrightAvailable = null; // 延迟检测
   }
 
   ensureDownloadDir() {
-    if (!fs.existsSync(this.downloadDir)) {
+    if (!this.isServerless && !fs.existsSync(this.downloadDir)) {
       fs.mkdirSync(this.downloadDir, { recursive: true });
     }
   }
@@ -222,10 +230,37 @@ class WebpageProcessor {
   }
 
   // 智能选择转换策略
-  async convertWebpageToPdf(url) {
-    // Vercel环境直接使用Vercel转换器
-    if (isVercel) {
-      console.log('Vercel环境 - 使用云端转换策略');
+  async convertWebpageToPdf(url, format = 'auto') {
+    // Serverless环境优先使用Markdown转换
+    if (this.isServerless) {
+      console.log('Serverless环境 - 优先使用Markdown转换');
+      
+      // 如果用户明确要求PDF，尝试PDF转换，否则默认Markdown
+      if (format === 'pdf') {
+        const pdfResult = await this.vercelConverter.convertToPdf(url);
+        if (pdfResult.success) {
+          return pdfResult;
+        }
+        // PDF转换失败，回退到Markdown
+        console.log('PDF转换失败，回退到Markdown');
+      }
+      
+      // 尝试Markdown转换
+      const markdownResult = await this.contentExtractor.convertToMarkdown(url);
+      if (markdownResult.success) {
+        return {
+          ...markdownResult,
+          message: 'Serverless环境已转换为Markdown格式，更适合阅读和编辑',
+          alternatives: [
+            '📝 Markdown格式：保留完整结构，支持编辑',
+            '📄 如需PDF：可使用Typora、Mark Text等工具转换',
+            '🖨️ 浏览器打印：Ctrl+P → 另存为PDF',
+            '💻 本地版本：获得完整PDF转换功能'
+          ]
+        };
+      }
+      
+      // Markdown也失败，提供指导
       return await this.vercelConverter.convertToPdf(url);
     }
 
