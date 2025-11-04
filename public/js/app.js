@@ -70,25 +70,24 @@ async function handleFormSubmit(e) {
         return;
     }
     
-    // 自动提取URL
+    // 自动提取URL，如果没有找到URL则按行分割处理
+    let urlList;
     const extractedUrls = extractUrlsFromText(inputText);
-    console.log('提取到的URLs:', extractedUrls);
     
-    if (extractedUrls.length === 0) {
-        alert('未在输入文本中找到有效的URL链接');
-        return;
-    }
-    
-    // 如果提取到的URL数量与输入行数不同，显示提取结果
-    const inputLines = inputText.split('\n').filter(line => line.trim()).length;
-    if (extractedUrls.length !== inputLines) {
-        const confirmMsg = `从输入文本中提取到 ${extractedUrls.length} 个URL：\n\n${extractedUrls.slice(0, 5).join('\n')}${extractedUrls.length > 5 ? '\n...' : ''}\n\n是否继续处理这些URL？`;
-        if (!confirm(confirmMsg)) {
+    if (extractedUrls.length > 0) {
+        // 找到URL，使用提取的URL
+        urlList = extractedUrls;
+        console.log(`从文本中提取到 ${extractedUrls.length} 个URL`);
+    } else {
+        // 没有找到URL，按传统方式处理（每行一个URL）
+        urlList = inputText.split('\n').filter(url => url.trim());
+        console.log(`按行处理 ${urlList.length} 个URL`);
+        
+        if (urlList.length === 0) {
+            alert('请输入有效的URL或包含URL的文本');
             return;
         }
     }
-    
-    const urlList = extractedUrls;
     const submitBtn = document.getElementById('submitBtn');
     const loading = document.getElementById('loading');
     const result = document.getElementById('result');
@@ -189,14 +188,26 @@ function showProgress(current, total) {
 // 服务端处理
 async function processServerSide(urlList) {
     try {
+        // 对于大量URL，增加超时时间
+        const timeoutMs = Math.max(30000, urlList.length * 2000); // 每个URL至少2秒，最少30秒
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        
+        console.log(`处理 ${urlList.length} 个URL，超时设置: ${timeoutMs/1000}秒`);
+        
         const response = await fetch('/process', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ urls: urlList })
+            body: JSON.stringify({ urls: urlList }),
+            signal: controller.signal
         });
         
+        clearTimeout(timeoutId);
+        
         if (!response.ok) {
-            throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
+            const errorText = await response.text();
+            throw new Error(`HTTP错误 ${response.status}: ${errorText || response.statusText}`);
         }
         
         const data = await response.json();
@@ -209,7 +220,15 @@ async function processServerSide(urlList) {
         return data;
     } catch (error) {
         console.error('服务端处理错误:', error);
-        throw error;
+        
+        // 提供更友好的错误信息
+        if (error.name === 'AbortError') {
+            throw new Error(`请求超时：处理 ${urlList.length} 个URL需要更多时间，请尝试减少URL数量或稍后重试`);
+        } else if (error.message.includes('Failed to fetch')) {
+            throw new Error('网络连接失败，请检查网络连接或稍后重试');
+        } else {
+            throw error;
+        }
     }
 }
 
@@ -641,13 +660,15 @@ function showFinalResult(data, loading, result) {
         
         // 显示失败的结果
         if (failedResults.length > 0) {
-            html += '<h4>❌ 处理失败</h4>';
+            html += '<h4>⚠️ 跳过的URL (' + failedResults.length + '个)</h4>';
+            html += '<div style="margin-bottom: 16px; padding: 12px; background: #fef3cd; border-radius: 6px; border-left: 4px solid #f59e0b;">';
+            html += '<p style="margin: 0 0 8px 0; color: #92400e; font-weight: 500;">以下URL无法处理，已自动跳过：</p>';
             failedResults.forEach(failed => {
-                html += '<div style="margin-bottom: 8px; padding: 8px; background: #fef2f2; border-radius: 4px; font-size: 14px;">';
-                html += '<strong>URL:</strong> ' + failed.url + '<br>';
-                html += '<strong>错误:</strong> ' + failed.error;
+                html += '<div style="margin-bottom: 8px; padding: 8px; background: #ffffff; border-radius: 4px; font-size: 14px;">';
+                html += '<div style="color: #374151; margin-bottom: 4px;"><strong>URL:</strong> ' + (failed.url.length > 60 ? failed.url.substring(0, 60) + '...' : failed.url) + '</div>';
+                html += '<div style="color: #dc2626; font-size: 13px;"><strong>原因:</strong> ' + (failed.error || '未知错误') + '</div>';
                 if (failed.suggestion) {
-                    html += '<br><strong>建议:</strong> ' + failed.suggestion;
+                    html += '<div style="color: #059669; font-size: 13px; margin-top: 4px;"><strong>建议:</strong> ' + failed.suggestion + '</div>';
                 }
                 html += '</div>';
             });

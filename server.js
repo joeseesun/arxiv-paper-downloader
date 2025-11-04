@@ -127,10 +127,17 @@ app.post('/process', async (req, res) => {
       });
     }
     
-    console.log('收到处理请求:', urls);
+    console.log(`收到处理请求: ${urls.length} 个URL`);
+    
+    // 对于大量URL，添加处理提示
+    if (urls.length > 10) {
+      console.log(`处理大量URL (${urls.length}个)，预计需要 ${Math.ceil(urls.length * 2)} 秒...`);
+    }
     
     // 处理URL
     const results = await processor.processMultiple(urls);
+    
+    console.log(`处理完成: ${results.length} 个结果`);
     
     // 检查是否有arXiv列表提取结果
     const arxivListResults = results.filter(r => r.success && r.type === 'arxiv_list');

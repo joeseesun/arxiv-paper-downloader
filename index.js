@@ -45,14 +45,35 @@ class ArticleProcessor {
       console.log(`\n处理第 ${results.length + 1}/${urls.length} 个URL...`);
       console.log(`URL: ${url}`);
       
-      const result = await this.processUrl(url);
-      results.push(result);
+      try {
+        const result = await this.processUrl(url);
+        results.push(result);
+        
+        if (result.success) {
+          console.log(`✅ 成功: ${result.title || result.filename || 'URL处理完成'}`);
+        } else {
+          console.log(`⚠️ 失败: ${result.error || '未知错误'}`);
+        }
+      } catch (error) {
+        console.error(`❌ 处理URL时发生错误: ${error.message}`);
+        
+        // 即使单个URL失败，也要继续处理其他URL
+        results.push({
+          success: false,
+          url: url,
+          error: error.message || '处理失败',
+          type: 'error'
+        });
+      }
       
-      // 添加延迟
+      // 添加延迟，避免请求过于频繁
       if (results.length < urls.length) {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
+    
+    const successCount = results.filter(r => r.success).length;
+    console.log(`\n📊 批量处理完成: ${successCount}/${urls.length} 成功`);
     
     return results;
   }

@@ -1,0 +1,18 @@
+## 第一部分：模型的范式变迁（Model Paradigm Shift）
+
+- **Brook for GPU (2004 年 8 月)**：该论文提出了一个针对 GPU 的高级编程框架，抽象化了 GPU 上流计算的概念，解决了当时用近似汇编的低级语言编写 GPU 程序的困难，为后来的 CUDA 等 GPU 计算框架奠定基础。
+    
+- **AlexNet (2012 年 10 月)**：首次在 ImageNet 数据集上成功训练大规模卷积神经网络（约 6250 万参数），同时扩大了数据集规模、模型规模和计算量，显著超越传统手工特征的图像分类性能，开启深度学习时代。
+    
+- **Seq2Seq 与 Attention (2014 年 9 月)**：提出了端到端的序列到序列学习框架，解决输入与输出序列长度不一致的问题；引入 Attention 机制缓解了编码器—解码器结构的固定长度信息瓶颈，为之后 Transformer 的出现铺垫基础。
+
+### 第一部分论文链接汇总
+
+|论文名称|发表时间|可下载链接|
+|---|---|---|
+|Brook for GPU|2004-08| `https://graphics.stanford.edu/papers/brook/brook.pdf` |
+|AlexNet (ImageNet Classification with Deep CNNs)|2012-10| `https://papers.nips.cc/paper/2012/file/6c1b2dbf.txt`  (或 arXiv: `https://arxiv.org/abs/1409.0575` )|
+|Sequence to Sequence Learning with Neural Networks|2014-09| `https://arxiv.org/abs/1409.3215` |
+|Distilling the Knowledge in a Neural Network|2015-03| `https://arxiv.org/abs/1503.02531` |
+|Deep Residual Learning for Image Recognition|2015-12| `https://arxiv.org/abs/1512.03385` |
+|Attention Is All You Need|2017-06| `https://arxiv.org/abs/1706.03762` |
