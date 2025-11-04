@@ -1,5 +1,18 @@
 # 学术资源工具
 
+<div align="center">
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fjoeseesun%2Farxiv-paper-downloader&project-name=academic-resource-tool&repository-name=academic-resource-tool)
+
+[![GitHub stars](https://img.shields.io/github/stars/joeseesun/arxiv-paper-downloader?style=social)](https://github.com/joeseesun/arxiv-paper-downloader)
+[![GitHub forks](https://img.shields.io/github/forks/joeseesun/arxiv-paper-downloader?style=social)](https://github.com/joeseesun/arxiv-paper-downloader)
+[![GitHub issues](https://img.shields.io/github/issues/joeseesun/arxiv-paper-downloader)](https://github.com/joeseesun/arxiv-paper-downloader/issues)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/joeseesun/arxiv-paper-downloader/blob/main/LICENSE)
+
+**🌐 [在线体验](https://paper.qiaomu.ai) | 📚 [使用文档](#-使用示例) | 🚀 [一键部署](#一键部署)**
+
+</div>
+
 一个强大的学术资源处理工具，支持arXiv论文PDF下载和网页内容转Markdown。采用serverless架构，部署在Vercel上，提供稳定的在线服务。
 
 ## 🌟 功能特点
@@ -13,13 +26,32 @@
 - 🎨 **现代化界面**：简洁美观的Web界面，支持预览和下载
 - ☁️ **Serverless部署**：基于Vercel的serverless架构，无需本地部署
 
-## 🚀 在线使用
+## 🚀 快速开始
 
-### 访问地址
+### 在线使用
 
 **🌐 在线版本：[https://paper.qiaomu.ai](https://paper.qiaomu.ai)**
 
 无需安装，直接在浏览器中使用！
+
+### 一键部署
+
+想要部署自己的版本？点击下面的按钮即可一键部署到Vercel：
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fjoeseesun%2Farxiv-paper-downloader&project-name=academic-resource-tool&repository-name=academic-resource-tool)
+
+**部署步骤**：
+1. 点击上方按钮
+2. 登录或注册Vercel账号
+3. 授权GitHub访问权限
+4. 等待自动部署完成（约2-3分钟）
+5. 获得你的专属域名！
+
+**优势**：
+- ✅ **完全免费**：Vercel提供免费的serverless托管
+- ✅ **自动更新**：连接GitHub后可自动部署更新
+- ✅ **全球CDN**：访问速度快，稳定性高
+- ✅ **自定义域名**：可绑定自己的域名
 
 ### 使用方法
 
@@ -57,13 +89,30 @@ npm start
 
 ### 4. 部署到Vercel
 
+#### 方法一：使用Vercel CLI
+
 ```bash
 # 安装Vercel CLI
 npm i -g vercel
 
-# 部署
+# 登录Vercel
+vercel login
+
+# 部署到生产环境
 vercel --prod
 ```
+
+#### 方法二：GitHub集成（推荐）
+
+1. 将代码推送到GitHub仓库
+2. 在[Vercel Dashboard](https://vercel.com/dashboard)中导入项目
+3. 选择GitHub仓库
+4. 保持默认配置，点击Deploy
+5. 自动部署完成！
+
+**环境变量配置**（可选）：
+- 无需额外配置，项目开箱即用
+- 如需自定义功能，可在Vercel Dashboard中添加环境变量
 
 ## 📋 支持的内容类型
 
