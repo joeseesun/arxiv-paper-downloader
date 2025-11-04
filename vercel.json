@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/downloads/(.*)",
+      "dest": "/api/download/$1"
+    },
+    {
+      "src": "/download-pdf",
+      "dest": "/api/download-pdf"
+    },
+    {
+      "src": "/process",
+      "dest": "/api/process"
+    },
+    {
+      "src": "/batch-download",
+      "dest": "/api/batch-download"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/server.js"
+    }
+  ],
+  "functions": {
+    "server.js": {
+      "maxDuration": 30
+    }
+  }
+}
