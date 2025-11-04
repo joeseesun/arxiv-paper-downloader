@@ -101,12 +101,18 @@ async function handleFormSubmit(e) {
         // 直接使用服务端处理
         const data = await processServerSide(urlList);
         
+        console.log('服务器响应:', data);
+        console.log('响应类型:', data.type);
+        
         // 检查是否是arXiv相关结果
         if (data.type === 'arxiv_list_extracted') {
+            console.log('显示arXiv预览界面');
             showArxivListResult(data, loading, result);
         } else if (data.type === 'arxiv_batch_download') {
+            console.log('显示批量下载结果');
             showArxivBatchResult(data, loading, result);
         } else {
+            console.log('显示最终结果');
             showFinalResult(data, loading, result);
         }
         

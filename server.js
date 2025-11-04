@@ -154,6 +154,35 @@ app.post('/process', async (req, res) => {
     }
     
     // 检查是否有多个arXiv论文链接（应该显示预览）
+    // 先检查URL是否都是arXiv论文链接
+    const arxivUrls = urls.filter(url => url.includes('arxiv.org/abs/'));
+    
+    if (arxivUrls.length >= 3) {
+      // 如果有3个或更多arXiv论文URL，直接返回预览（不获取标题以避免reCAPTCHA）
+      console.log(`检测到 ${arxivUrls.length} 个arXiv论文链接，返回预览界面`);
+      
+      const papersWithInfo = arxivUrls.map(url => {
+        const match = url.match(/\/abs\/(\d{4}\.\d{4,5})/);
+        const arxivId = match ? match[1] : 'unknown';
+        return {
+          url: url,
+          pdfUrl: `https://arxiv.org/pdf/${arxivId}.pdf`,
+          id: arxivId,
+          title: `arXiv:${arxivId}` // 使用arXiv ID作为标题，避免reCAPTCHA
+        };
+      });
+      
+      return res.json({
+        success: true,
+        type: 'arxiv_list_extracted',
+        extractedCount: papersWithInfo.length,
+        papersWithInfo: papersWithInfo,
+        results: [],
+        message: `检测到 ${papersWithInfo.length} 篇arXiv论文，请选择要下载的论文`
+      });
+    }
+    
+    // 如果已经处理完成，检查结果中的arXiv论文
     const arxivPaperResults = results.filter(r => r.success && r.arxivId);
     
     if (arxivPaperResults.length >= 3) {
